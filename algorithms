@@ -1,0 +1,66 @@
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn import datasets
+import matplotlib.pyplot as plt
+import pandas as pd
+
+class LinearRegression():
+    def __init__(self, lr=0.01, n_epoch=1000):
+        self.lr = lr
+        self.n_epoch = n_epoch
+        self.theta = None
+
+    def fit(self, X, y):
+        n_sample, n_feature = X.shape
+        self.theta = np.zeros(n_feature)
+        cost = [self.lr_cost(X, y, self.theta)]
+
+        for _ in range(self.n_epoch):
+            y_pred = np.dot(X, self.theta.T)
+            inner = (1/n_sample) * np.dot(X.T, (y_pred - y))
+            self.theta -= self.lr * inner
+            cost.append(self.lr_cost(X, y, self.theta))
+        return cost
+
+    def predict(self, x):
+        y_pred = np.dot(x, self.theta.T)
+        return y_pred
+
+    def lr_cost(self, X, y, theta):
+        m = X.shape[0]
+        inner = np.dot(X, theta) - y
+        square_sum = inner.T @ inner
+        cost = square_sum / (2 * m)
+        return cost
+
+def mse(y_pred, y_true):
+    return np.mean((y_true - y_pred) ** 2)
+
+def get_X(df):
+    ones = pd.DataFrame(np.ones(len(df)))
+    data = pd.concat([ones, df], axis=1)
+    return data
+
+
+def main():
+    X, y= datasets.make_regression(n_samples=100, n_features=1, noise=20, random_state=4)
+    X = pd.DataFrame(X)
+    X = get_X(X)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1234)
+    lr = LinearRegression()
+    lr.fit(X_train, y_train)
+    cost = lr.fit(X_train, y_train)
+    predicitons = lr.predict(X_test)
+    mse_vlaue = mse(predicitons, y_test)
+    print(mse_vlaue)
+    y_pred = lr.predict(X)
+    fig = plt.figure(figsize=(10, 6))
+    cmap = plt.get_cmap('viridis')
+    #m1 = plt.scatter(X_train.iloc[:, 1], y_train, color=cmap(0.9), s=10)
+    #m2 = plt.scatter(X_test.iloc[:, 1], y_test, color=cmap(0.5), s=10)
+    #plt.plot(X.iloc[:, 1], y_pred, linewidth=0.2, color='black')
+    plt.plot(cost)
+    plt.show()
+
+if __name__ == '__main__':
+    main()
